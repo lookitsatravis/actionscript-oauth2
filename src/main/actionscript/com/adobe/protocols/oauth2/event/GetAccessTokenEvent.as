@@ -27,6 +27,7 @@ package com.adobe.protocols.oauth2.event
 		private var _scope:String;
 		private var _state:String;
 		private var _response:Object;
+		private var _instanceURL:String;
 		
 		/**
 		 * Constructor.
@@ -50,6 +51,7 @@ package com.adobe.protocols.oauth2.event
 			// required
 			_accessToken = response.access_token;
 			_tokenType = response.token_type;
+			_instanceURL = response.instance_url;
 			
 			// optional
 			_expiresIn = int(response.expires_in);
@@ -110,6 +112,14 @@ package com.adobe.protocols.oauth2.event
 		{
 			return _accessToken;
 		}  // accessToken
+		
+		/**
+		 * The instance URL issued by the authorization server.
+		 */
+		public function get instanceURL():String
+		{
+			return _instanceURL;
+		}
 
 		/**
 		 * The type of the token issued as described in the OAuth 2.0

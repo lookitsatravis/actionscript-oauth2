@@ -7,6 +7,7 @@ package com.adobe.protocols.oauth2
 	import com.adobe.protocols.oauth2.grant.ImplicitGrant;
 	import com.adobe.protocols.oauth2.grant.ResourceOwnerCredentialsGrant;
 	import com.adobe.serialization.json.JSONParseError;
+	import com.unicore.util.Logger;
 	
 	import flash.events.ErrorEvent;
 	import flash.events.Event;
@@ -18,13 +19,6 @@ package com.adobe.protocols.oauth2
 	import flash.net.URLRequest;
 	import flash.net.URLRequestMethod;
 	import flash.net.URLVariables;
-	
-	import org.as3commons.logging.api.ILogger;
-	import org.as3commons.logging.api.LOGGER_FACTORY;
-	import org.as3commons.logging.api.getLogger;
-	import org.as3commons.logging.setup.LevelTargetSetup;
-	import org.as3commons.logging.setup.LogSetupLevel;
-	import org.as3commons.logging.setup.target.TraceTarget;
 
 	/**
 	 * Event that is broadcast when results from a <code>getAccessToken</code> request are received.
@@ -55,14 +49,10 @@ package com.adobe.protocols.oauth2
 	 * @author Charles Bihis (www.whoischarles.com)
 	 */
 	public class OAuth2 extends EventDispatcher
-	{
-		private static const log:ILogger = getLogger(OAuth2);
-		
+	{		
 		private var grantType:IGrantType;
 		private var authEndpoint:String;
-		private var tokenEndpoint:String;
-		private var traceTarget:TraceTarget = new TraceTarget();
-		
+		private var tokenEndpoint:String;		
 		
 		/**
 		 * Constructor to create a valid OAuth2 client object.
@@ -71,16 +61,11 @@ package com.adobe.protocols.oauth2
 		 * @param tokenEndpoint The token endpoint used by the OAuth 2.0 server
 		 * @param logLevel (Optional) The new log level for the logger to use
 		 */
-		public function OAuth2(authEndpoint:String, tokenEndpoint:String, logLevel:LogSetupLevel = null)
+		public function OAuth2(authEndpoint:String, tokenEndpoint:String)
 		{
 			// save endpoint properties
 			this.authEndpoint = authEndpoint;
 			this.tokenEndpoint = tokenEndpoint;
-			
-			// set up logging
-			traceTarget = new TraceTarget();
-			traceTarget.format = "{date} {time} [{logLevel}] {name} {message}";
-			LOGGER_FACTORY.setup = new LevelTargetSetup(traceTarget, (logLevel == null) ? LogSetupLevel.NONE : logLevel);
 		} // OAuth2
 		
 		/**
@@ -97,17 +82,17 @@ package com.adobe.protocols.oauth2
 		{
 			if (grantType is AuthorizationCodeGrant)
 			{
-				log.info("Initiating getAccessToken() with authorization code grant type workflow");
+				Logger.info("Oauth2.getAccessToken(): Initiating getAccessToken() with authorization code grant type workflow");
 				getAccessTokenWithAuthorizationCodeGrant(grantType as AuthorizationCodeGrant);
 			}  // if statement
 			else if (grantType is ImplicitGrant)
 			{
-				log.info("Initiating getAccessToken() with implicit grant type workflow");
+				Logger.info("Oauth2.getAccessToken(): Initiating getAccessToken() with implicit grant type workflow");
 				getAccessTokenWithImplicitGrant(grantType as ImplicitGrant);
 			}  // else-if statement
 			else if (grantType is ResourceOwnerCredentialsGrant)
 			{
-				log.info("Initiating getAccessToken() with resource owner credentials grant type workflow");
+				Logger.info("Oauth2.getAccessToken(): Initiating getAccessToken() with resource owner credentials grant type workflow");
 				getAccessTokenWithResourceOwnerCredentialsGrant(grantType as ResourceOwnerCredentialsGrant);
 			}  // else-if statement
 		}  // getAccessToken
@@ -155,7 +140,7 @@ package com.adobe.protocols.oauth2
 			}  // try statement
 			catch (error:Error)
 			{
-				log.error("Error loading token endpoint \"" + tokenEndpoint + "\"");
+				Logger.error("Oauth2.refreshAccessToken() Error loading token endpoint \"" + tokenEndpoint + "\"");
 			}  // catch statement
 			
 			function onRefreshAccessTokenResult(event:Event):void
@@ -163,7 +148,7 @@ package com.adobe.protocols.oauth2
 				try
 				{
 					var response:Object = com.adobe.serialization.json.JSON.decode(event.target.data);
-					log.debug("Access token: " + response.access_token);
+					Logger.error("Oauth2.refreshAccessToken() Access token: " + response.access_token);
 					refreshAccessTokenEvent.parseAccessTokenResponse(response);
 				}  // try statement
 				catch (error:JSONParseError)
@@ -177,7 +162,7 @@ package com.adobe.protocols.oauth2
 			
 			function onRefreshAccessTokenError(event:Event):void
 			{
-				log.error("Error encountered during refresh access token request: " + event);
+				Logger.error("Oauth2.refreshAccessToken() Error encountered during refresh access token request: " + event);
 				
 				try
 				{
@@ -194,47 +179,6 @@ package com.adobe.protocols.oauth2
 				dispatchEvent(refreshAccessTokenEvent);
 			}  // onRefreshAccessTokenError
 		}  // refreshAccessToken
-		
-		/**
-		 * Modifies the log level of the logger at runtime.
-		 * 
-		 * <p>By default, logging is turned off.  Passing in any value will modify the logging level
-		 * of the application.  This method can accept any of the following values...</p>
-		 * 
-		 * <ul>
-		 * 	<li>LogSetupLevel.NONE</li>
-		 *  <li>LogSetupLevel.FATAL</li>
-		 *  <li>LogSetupLevel.FATAL_ONLY</li>
-		 *  <li>LogSetupLevel.ERROR</li>
-		 *  <li>LogSetupLevel.ERROR_ONLY</li>
-		 *  <li>LogSetupLevel.WARN</li>
-		 *  <li>LogSetupLevel.WARN_ONLY</li>
-		 *  <li>LogSetupLevel.INFO</li>
-		 *  <li>LogSetupLevel.INFO_ONLY</li>
-		 *  <li>LogSetupLevel.DEBUG</li>
-		 *  <li>LogSetupLevel.DEBUG_ONLY</li>
-		 *  <li>LogSetupLevel.ALL</li>
-		 * </ul>
-		 * 
-		 * @param logLevel The new log level for the logger to use
-		 * 
-		 * @see org.as3commons.logging.setup.LogSetupLevel.NONE
-		 * @see org.as3commons.logging.setup.LogSetupLevel.FATAL
-		 * @see org.as3commons.logging.setup.LogSetupLevel.FATAL_ONLY
-		 * @see org.as3commons.logging.setup.LogSetupLevel.ERROR
-		 * @see org.as3commons.logging.setup.LogSetupLevel.ERROR_ONLY
-		 * @see org.as3commons.logging.setup.LogSetupLevel.WARN
-		 * @see org.as3commons.logging.setup.LogSetupLevel.WARN_ONLY
-		 * @see org.as3commons.logging.setup.LogSetupLevel.INFO
-		 * @see org.as3commons.logging.setup.LogSetupLevel.INFO_ONLY
-		 * @see org.as3commons.logging.setup.LogSetupLevel.DEBUG
-		 * @see org.as3commons.logging.setup.LogSetupLevel.DEBUG_ONLY
-		 * @see org.as3commons.logging.setup.LogSetupLevel.ALL
-		 */
-		public function setLogLevel(logLevel:LogSetupLevel):void
-		{
-			LOGGER_FACTORY.setup = new LevelTargetSetup(traceTarget, logLevel);
-		}  // setLogLevel
 		
 		/**
 		 * @private
@@ -254,15 +198,15 @@ package com.adobe.protocols.oauth2
 			
 			// start the auth process
 			var startTime:Number = new Date().time;
-			log.info("Loading auth URL: " + authorizationCodeGrant.getFullAuthUrl(authEndpoint));
+			Logger.info("Oauth2.getAccessTokenWithAuthorizationCodeGrant() Loading auth URL: " + authorizationCodeGrant.getFullAuthUrl(authEndpoint));
 			authorizationCodeGrant.stageWebView.loadURL(authorizationCodeGrant.getFullAuthUrl(authEndpoint));
 			
 			function onLocationChanging(locationChangeEvent:LocationChangeEvent):void
 			{
-				log.info("Loading URL: " + locationChangeEvent.location);
+				Logger.info("Oauth2.getAccessTokenWithAuthorizationCodeGrant() Loading URL: " + locationChangeEvent.location);
 				if (locationChangeEvent.location.indexOf(authorizationCodeGrant.redirectUri) == 0)
 				{
-					log.info("Redirect URI encountered (" + authorizationCodeGrant.redirectUri + ").  Extracting values from path.");
+					Logger.info("Oauth2.getAccessTokenWithAuthorizationCodeGrant() Redirect URI encountered (" + authorizationCodeGrant.redirectUri + ").  Extracting values from path.");
 					
 					// stop event from propogating
 					locationChangeEvent.preventDefault();
@@ -272,7 +216,7 @@ package com.adobe.protocols.oauth2
 					var code:String = queryParams.code;		// authorization code
 					if (code != null)
 					{
-						log.debug("Authorization code: " + code);
+						Logger.info("Oauth2.getAccessTokenWithAuthorizationCodeGrant() Authorization code: " + code);
 						
 						// set up URL request
 						var urlRequest:URLRequest = new URLRequest(tokenEndpoint);
@@ -300,12 +244,12 @@ package com.adobe.protocols.oauth2
 						}  // try statement
 						catch (error:Error)
 						{
-							log.error("Error loading token endpoint \"" + tokenEndpoint + "\"");
+							Logger.error("Oauth2.getAccessTokenWithAuthorizationCodeGrant() Error loading token endpoint \"" + tokenEndpoint + "\"");
 						}  // catch statement
 					}  // if statement
 					else
 					{
-						log.error("Error encountered during authorization request");
+						Logger.error("Oauth2.getAccessTokenWithAuthorizationCodeGrant() Error encountered during authorization request");
 						getAccessTokenEvent.errorCode = queryParams.error;
 						getAccessTokenEvent.errorMessage = queryParams.error_description;
 						dispatchEvent(getAccessTokenEvent);
@@ -317,7 +261,7 @@ package com.adobe.protocols.oauth2
 					try
 					{
 						var response:Object = com.adobe.serialization.json.JSON.decode(event.target.data);
-						log.debug("Access token: " + response.access_token);
+						Logger.info("Oauth2.getAccessTokenWithAuthorizationCodeGrant() Access token: " + response.access_token);
 						getAccessTokenEvent.parseAccessTokenResponse(response);
 					}  // try statement
 					catch (error:JSONParseError)
@@ -331,7 +275,7 @@ package com.adobe.protocols.oauth2
 				
 				function onGetAccessTokenError(event:Event):void
 				{
-					log.error("Error encountered during access token request: " + event);
+					Logger.error("Oauth2.getAccessTokenWithAuthorizationCodeGrant() Error encountered during access token request: " + event);
 					
 					try
 					{
@@ -351,12 +295,12 @@ package com.adobe.protocols.oauth2
 			
 			function onStageWebViewComplete(event:Event):void
 			{
-				log.info("Auth URL loading complete after " + (new Date().time - startTime) + "ms");
+				Logger.info("Oauth2.getAccessTokenWithAuthorizationCodeGrant() Auth URL loading complete after " + (new Date().time - startTime) + "ms");
 			}  // onStageWebViewComplete
 			
 			function onStageWebViewError(event:ErrorEvent):void
 			{
-				log.error("Error occurred with StageWebView: " + event);
+				Logger.info("Oauth2.getAccessTokenWithAuthorizationCodeGrant() Error occurred with StageWebView: " + event);
 				getAccessTokenEvent.errorCode = "STAGE_WEB_VIEW_ERROR";
 				getAccessTokenEvent.errorMessage = "Error occurred with StageWebView";
 				dispatchEvent(getAccessTokenEvent);
@@ -379,15 +323,15 @@ package com.adobe.protocols.oauth2
 			implicitGrant.stageWebView.addEventListener(ErrorEvent.ERROR, onStageWebViewError);
 			
 			// start the auth process
-			log.info("Loading auth URL: " + implicitGrant.getFullAuthUrl(authEndpoint));
+			Logger.info("Oauth2.getAccessTokenWithImplicitGrant() Loading auth URL: " + implicitGrant.getFullAuthUrl(authEndpoint));
 			implicitGrant.stageWebView.loadURL(implicitGrant.getFullAuthUrl(authEndpoint));
 			
 			function onLocationChange(event:LocationChangeEvent):void
 			{
-				log.info("Loading URL: " + event.location);
+				Logger.info("Oauth2.getAccessTokenWithImplicitGrant() Loading URL: " + event.location);
 				if (event.location.indexOf(implicitGrant.redirectUri) == 0)
 				{
-					log.info("Redirect URI encountered (" + implicitGrant.redirectUri + ").  Extracting values from path.");
+					Logger.info("Oauth2.getAccessTokenWithImplicitGrant() Redirect URI encountered (" + implicitGrant.redirectUri + ").  Extracting values from path.");
 					
 					// stop event from propogating
 					event.preventDefault();
@@ -397,13 +341,13 @@ package com.adobe.protocols.oauth2
 					var accessToken:String = queryParams.access_token;
 					if (accessToken != null)
 					{
-						log.debug("Access token: " + accessToken);
+						Logger.info("Oauth2.getAccessTokenWithImplicitGrant() Access token: " + accessToken);
 						getAccessTokenEvent.parseAccessTokenResponse(queryParams);
 						dispatchEvent(getAccessTokenEvent);
 					}  // if statement
 					else
 					{
-						log.error("Error encountered during access token request");
+						Logger.error("Oauth2.getAccessTokenWithImplicitGrant() Error encountered during access token request");
 						getAccessTokenEvent.errorCode = queryParams.error;
 						getAccessTokenEvent.errorMessage = queryParams.error_description;
 						dispatchEvent(getAccessTokenEvent);
@@ -413,7 +357,7 @@ package com.adobe.protocols.oauth2
 			
 			function onStageWebViewError(event:ErrorEvent):void
 			{
-				log.error("Error occurred with StageWebView: " + event);
+				Logger.error("Oauth2.getAccessTokenWithImplicitGrant() Error occurred with StageWebView: " + event);
 				getAccessTokenEvent.errorCode = "STAGE_WEB_VIEW_ERROR";
 				getAccessTokenEvent.errorMessage = "Error occurred with StageWebView";
 				dispatchEvent(getAccessTokenEvent);
@@ -434,6 +378,7 @@ package com.adobe.protocols.oauth2
 			var urlRequest:URLRequest = new URLRequest(tokenEndpoint);
 			var urlLoader:URLLoader = new URLLoader();
 			urlRequest.method = URLRequestMethod.POST;
+			urlRequest.contentType = "application/x-www-form-urlencoded";
 			
 			// define POST parameters
 			var urlVariables : URLVariables = new URLVariables();  
@@ -442,7 +387,7 @@ package com.adobe.protocols.oauth2
 			urlVariables.client_secret = resourceOwnerCredentialsGrant.clientSecret;
 			urlVariables.username = resourceOwnerCredentialsGrant.username;
 			urlVariables.password = resourceOwnerCredentialsGrant.password;
-			urlVariables.scope = resourceOwnerCredentialsGrant.scope;
+			//if(resourceOwnerCredentialsGrant.scope) urlVariables.scope = resourceOwnerCredentialsGrant.scope;
 			urlRequest.data = urlVariables;
 			
 			// attach event listeners
@@ -457,7 +402,7 @@ package com.adobe.protocols.oauth2
 			}  // try statement
 			catch (error:Error)
 			{
-				log.error("Error loading token endpoint \"" + tokenEndpoint + "\"");
+				Logger.error("Oauth2.getAccessTokenWithResourceOwnerCredentialsGrant() Error loading token endpoint \"" + tokenEndpoint + "\"");
 			}  // catch statement
 			
 			function onGetAccessTokenResult(event:Event):void
@@ -465,7 +410,8 @@ package com.adobe.protocols.oauth2
 				try
 				{
 					var response:Object = com.adobe.serialization.json.JSON.decode(event.target.data);
-					log.debug("Access token: " + response.access_token);
+					Logger.info("Oauth2.getAccessTokenWithResourceOwnerCredentialsGrant() Access token: " + response.access_token);
+					Logger.info("Oauth2.getAccessTokenWithResourceOwnerCredentialsGrant() Instance URL: " + response.instance_url);
 					getAccessTokenEvent.parseAccessTokenResponse(response);
 				}  // try statement
 				catch (error:JSONParseError)
@@ -479,7 +425,7 @@ package com.adobe.protocols.oauth2
 			
 			function onGetAccessTokenError(event:Event):void
 			{
-				log.error("Error encountered during access token request: " + event);
+				Logger.error("Oauth2.getAccessTokenWithResourceOwnerCredentialsGrant() Error encountered during access token request: " + event);
 				
 				try
 				{

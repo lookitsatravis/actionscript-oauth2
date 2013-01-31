@@ -2,13 +2,13 @@
 <flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
   <includeClasses>
     <classEntry path="com.adobe.protocols.oauth2.OAuth2"/>
-    <classEntry path="com.adobe.protocols.oauth2.grant.IGrantType"/>
-    <classEntry path="com.adobe.protocols.oauth2.grant.AuthorizationCodeGrant"/>
-    <classEntry path="com.adobe.protocols.oauth2.event.IOAuth2Event"/>
     <classEntry path="com.adobe.protocols.oauth2.event.GetAccessTokenEvent"/>
+    <classEntry path="com.adobe.protocols.oauth2.event.IOAuth2Event"/>
+    <classEntry path="com.adobe.protocols.oauth2.event.RefreshAccessTokenEvent"/>
+    <classEntry path="com.adobe.protocols.oauth2.grant.AuthorizationCodeGrant"/>
+    <classEntry path="com.adobe.protocols.oauth2.grant.IGrantType"/>
     <classEntry path="com.adobe.protocols.oauth2.grant.ImplicitGrant"/>
     <classEntry path="com.adobe.protocols.oauth2.grant.ResourceOwnerCredentialsGrant"/>
-    <classEntry path="com.adobe.protocols.oauth2.event.RefreshAccessTokenEvent"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>
