@@ -17,6 +17,7 @@ package com.adobe.protocols.oauth2
 	import flash.events.SecurityErrorEvent;
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
+	import flash.net.URLRequestHeader;
 	import flash.net.URLRequestMethod;
 	import flash.net.URLVariables;
 
@@ -379,6 +380,7 @@ package com.adobe.protocols.oauth2
 			var urlLoader:URLLoader = new URLLoader();
 			urlRequest.method = URLRequestMethod.POST;
 			urlRequest.contentType = "application/x-www-form-urlencoded";
+			urlRequest.requestHeaders = [new URLRequestHeader("Accept", "application/json")];
 			
 			// define POST parameters
 			var urlVariables : URLVariables = new URLVariables();  
